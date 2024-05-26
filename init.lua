@@ -99,20 +99,19 @@ local plugins = {
     {'catppuccin/nvim',
       name = 'catppuccin',
       priority = 1000,
-      opts = {background = '#1e1e1e'},
       config = function()
         vim.cmd.colorscheme 'catppuccin-mocha'
-        vim.api.nvim_set_hl(0, 'Normal', {bg = 'none'})
-        vim.api.nvim_set_hl(0, 'NormalFloat', {bg = 'none'})
-        vim.api.nvim_set_hl(0, 'NormalNC', {bg = 'none'})
-        vim.api.nvim_set_hl(0, 'NormalSB', {bg = 'none'})
+        vim.api.nvim_set_hl(0, 'Normal', {bg = '#1e1e1e'})
+        vim.api.nvim_set_hl(0, 'NormalFloat', {bg = '#1e1e1e'})
+        vim.api.nvim_set_hl(0, 'NormalNC', {bg = '#1e1e1e'})
+        vim.api.nvim_set_hl(0, 'NormalSB', {bg = '#1e1e1e'})
       end},
     {'nvim-treesitter/nvim-treesitter',
       build = ':TSUpdate',
       config = function()
         local configs = require('nvim-treesitter.configs')
         configs.setup({
-          ensure_installed = {'c', 'cpp', 'lua', 'go', 'gomod', 'gosum', 'html', 'css', 'python', 'vimdoc'},
+          ensure_installed = {'c', 'cpp', 'lua', 'go', 'gomod', 'gosum', 'html', 'css', 'python', 'vimdoc', 'markdown_inline'},
           sync_install = false,
           highlight = {enable = true, additional_vim_regex_highlighting = true}})
       end},
@@ -160,14 +159,14 @@ local plugins = {
                 color_error = {fg = '#f38ba8'},
                 color_warn = {fg = '#f9e2af'},
                 color_info = {fg = '#89b4fa'}}}},
-            lualine_c = {'%=', {'filename', color = {bg = '#313244', fg = '#89b4fa'}, separator = {right = "", left = ""}, path = 4}},
-            lualine_x = {{'o:encoding', fmt = string.upper}, {'fileformat', symbols = {unix = 'Unix-LF', dos = 'Win-CRLF', mac = 'Mac-CR'}}},
+            lualine_c = {'%=', {'filename', color = {bg = '#313244', fg = '#89b4fa'}, separator = {right = "", left = ""}, path = 4, icon = ''}},
+            lualine_x = {{'o:encoding', fmt = string.upper}, {'fileformat', symbols = {unix = ' Unix-LF', dos = ' Win-CRLF', mac = ' Mac-CR'}}},
             lualine_y = {{'diff',
               symbols = {added = ' ', modified = '󰝤 ', removed = ' '},
               diff_color = {
                 added = {fg = '#a6e3a1'},
                 modified = {fg = '#fab387'},
-                removed = {fg = '#f38ba8'}}}, {'filesize', separator = '│'}, {'filetype', fmt = function(str)
+                removed = {fg = '#f38ba8'}}, separator = '│'}, {'filesize', separator = '│'}, {'filetype', fmt = function(str)
                   local msg = ''
                   local buf_ft = vim.api.nvim_buf_get_option(0, 'filetype')
                   local clients = vim.lsp.get_active_clients()
@@ -176,7 +175,7 @@ local plugins = {
                     return 'Text' .. ' - ' .. 'LSP N/A'
                   end
                   if next(clients) == nil then
-                    return str
+                    return str .. ' - ' .. 'LSP N/A'
                   end
                   for _, client in ipairs(clients) do
                     local filetypes = client.config.filetypes
@@ -209,10 +208,17 @@ local plugins = {
       config = function()
         local registration = {['<leader>'] = {f = {name = 'Files/Find files'}, d = {name = 'Diagnostics'}, w = {name = 'Window'}, g = {name = 'Git'}, l = {name = 'Lsp'}}}
         require('which-key').register(registration)
-      end}}
+      end},
+      {'iamcco/markdown-preview.nvim',
+      cmd = {'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop'},
+      build = 'cd app && npm install',
+      init = function()
+        vim.g.mkdp_filetypes = {"markdown"}
+      end,
+      ft = {"markdown"}}}
 
 --3.3. Lazy configuration
-local conf = {ui = {border = 'rounded'}}
+local conf = {ui = {border = 'rounded'}, lazy = true}
 -- 3.4. Lazy setup
 require('lazy').setup(plugins, conf)
 
@@ -227,7 +233,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<leader>lc', function() vim.lsp.buf.code_action() end, {buffer = event.buf, desc = '[L]SP [C]ode Action'})
     vim.keymap.set('n', '<leader>lf', function() vim.lsp.buf.references() end, {buffer = event.buf, desc = '[L]SP Re[F]erences'})
     vim.keymap.set('n', '<leader>lr', function() vim.lsp.buf.rename() end, {buffer = event.buf, desc = '[L]SP [R]ename'})
-    vim.keymap.set('i', '<leader>ls', function() vim.lsp.buf.signature_help() end, {buffer = event.buf, desc = '[L]SP [S]ignature Help'})
   end,})
 local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
 require('mason').setup({})
@@ -261,7 +266,7 @@ cmp.setup({
     {name = 'buffer', keyword_length = 3}},
   mapping = cmp.mapping.preset.insert({
     ['<Tab>'] = cmp.mapping.confirm({ select = true }),
-    ['<C->'] = cmp.mapping.abort()}),
+    ['<C-z>'] = cmp.mapping.abort()}),
   snippet = {
     expand = function(args)
       require('luasnip').lsp_expand(args.body)
